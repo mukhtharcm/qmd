@@ -16,6 +16,7 @@ import {
 } from "node-llama-cpp";
 import { homedir } from "os";
 import { join } from "path";
+import { RemoteLLM } from "./llm.remote.js";
 import { existsSync, mkdirSync, statSync, unlinkSync, readdirSync, readFileSync, writeFileSync } from "fs";
 
 // =============================================================================
@@ -1177,32 +1178,41 @@ export function canUnloadLLM(): boolean {
 // Singleton for default LlamaCpp instance
 // =============================================================================
 
-let defaultLlamaCpp: LlamaCpp | null = null;
+
+// =============================================================================
+// Singleton for default LLM instance
+// =============================================================================
+
+let defaultLLM: LLM | null = null;
 
 /**
- * Get the default LlamaCpp instance (creates one if needed)
+ * Get the default LLM instance (creates one if needed)
  */
-export function getDefaultLlamaCpp(): LlamaCpp {
-  if (!defaultLlamaCpp) {
-    defaultLlamaCpp = new LlamaCpp();
+export function getDefaultLlamaCpp(): LLM {
+  if (!defaultLLM) {
+    if (process.env.QMD_REMOTE_URL || process.env.QMD_REMOTE_KEY) {
+      defaultLLM = new RemoteLLM();
+    } else {
+      defaultLLM = new LlamaCpp();
+    }
   }
-  return defaultLlamaCpp;
+  return defaultLLM;
 }
 
 /**
- * Set a custom default LlamaCpp instance (useful for testing)
+ * Set a custom default LLM instance (useful for testing)
  */
-export function setDefaultLlamaCpp(llm: LlamaCpp | null): void {
-  defaultLlamaCpp = llm;
+export function setDefaultLlamaCpp(llm: LLM | null): void {
+  defaultLLM = llm as any;
 }
 
 /**
- * Dispose the default LlamaCpp instance if it exists.
+ * Dispose the default LLM instance if it exists.
  * Call this before process exit to prevent NAPI crashes.
  */
 export async function disposeDefaultLlamaCpp(): Promise<void> {
-  if (defaultLlamaCpp) {
-    await defaultLlamaCpp.dispose();
-    defaultLlamaCpp = null;
+  if (defaultLLM) {
+    await defaultLLM.dispose();
+    defaultLLM = null;
   }
 }
