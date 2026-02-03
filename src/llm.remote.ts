@@ -133,7 +133,8 @@ Final Output:`;
       return { type: type as any, text };
     }).filter((q): q is Queryable => q !== null);
 
-    return includeLexical ? queryables : queryables.filter(q => q.type !== 'lex');
+    const includeLex = options.includeLexical ?? true;
+    return includeLex ? queryables : queryables.filter(q => q.type !== 'lex');
   }
 
   async rerank(query: string, documents: RerankDocument[], options: RerankOptions = {}): Promise<RerankResult> {
